@@ -25,10 +25,20 @@ local TSInjector = require "telescope._extensions.egrepify.treesitter"
 -- ensure picker is accessed where needed (sorter, actions)
 local picker
 
+-- do not account for title in matches
+-- telescope.nvim removed `Picker:_decrement` (2026-11), so adjust the stats directly
+local function decrement_processed()
+  if picker._decrement then
+    picker:_decrement "processed"
+  else
+    picker.stats.processed = (picker.stats.processed or 1) - 1
+  end
+end
+
 local empty_sorter = sorters.new {
   scoring_function = function(_, _, _, entry)
     if entry.kind == "begin" then
-      picker:_decrement "processed" -- do not account for title in matches
+      decrement_processed()
     end
     return 1
   end,
@@ -38,7 +48,7 @@ local empty_sorter = sorters.new {
 local descending_sorter = sorters.new {
   scoring_function = function(_, _, _, entry)
     if entry.kind == "begin" then
-      picker:_decrement "processed" -- do not account for title in matches
+      decrement_processed()
     end
     -- telescope does not manage entries if score is 1
     -- required to activate `tiebreak`
